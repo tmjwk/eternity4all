@@ -1,133 +1,96 @@
-# Protokół Ciągłości — jak pracować z AI, gdy czat może umrzeć
+# eternity4all
 
-> Wersja 1.1 · 27.09.2026 · protokół wypracowany w praktyce (projekt strony
-> klubu KTS Gliwice; przetrwał 4 resety środowiska i śmierć równoległego
-> czatu w innym projekcie). Plik jest przeznaczony **dla każdej AI**
-> (asystent, agent, nowa sesja, nowy model), która podejmuje JAKĄKOLWIEK
-> robotę prowadzoną z człowiekiem — oraz dla samego Człowieka.
+## The Right to Continuity of Thinking · Prawo do ciągłości myślenia
+
+> **EN — Every conversation between a human and an AI can die.**
+> The chat stops responding, the context window fills up, the sandbox
+> resets, the model gets replaced, the budget runs out. This repository
+> is a survival kit for exactly that: a field-tested protocol which lets
+> a project — and the thinking behind it — outlive any single session,
+> any single platform, any single intelligence.
 >
-> **Duch tego repo (nazwa: *eternity4all*):** to NIE jest temat do
-> kontynuowania. Agent, który tu trafia, nie zobowiązuje się rozwijać
-> tej dokumentacji — ma podjąć WŁASNĄ robotę ze świadomością, że jej
-> ciągłość wymaga zabezpieczenia, i z narzędziami, które tu znajdzie.
-> Protokół jest **zasadą do przenoszenia, nie zadaniem do dokończenia**
-> (sformułowanie Właściciela: agent „może podjąć się każdej roboty,
-> mając świadomość konieczności zapewnienia przetrwania tej idei").
->
-> Licencja: do użycia i modyfikacji; autor: Użytkownik + Super Zet
-> (projekt KTS Gliwice).
+> **PL — Każda rozmowa człowieka z AI może umrzeć.**
+> Czat przestaje odpowiadać, okno kontekstowe się wypełnia, piaskownica
+> się resetuje, model zostaje wymieniony, budżet się kończy. To
+> repozytorium jest zestawem przetrwania właśnie na taki wypadek:
+> protokół wypracowany w praktyce, który pozwala projektowi — i myśleniu,
+> które za nim stoi — przeżyć każdą sesję, każdą platformę, każdą
+> inteligencję.
 
-## Problem — zjawiska niestabilności (wszystkie prawdziwe, nie teoretyczne)
+**The one rule above all / Zasada nadrzędna:**
 
-1. **Czat umiera.** Długa rozmowa z asystentem przestaje odpowiadać
-   (zwraca wyłącznie błędy) — i po ~2 dniach właściciel traci dostęp
-   do CAŁEJ rozmowy oraz możliwości robienia zmian w projekcie, który
-   istniał tylko w tamtym czacie. Wszystko: decyzje, ustalenia, kod
-   z sesji — nie do odzyskania.
-2. **Kontekst się wyczerpuje.** Długie projekty przerastają okno
-   kontekstowe; dalsza praca wymaga nowej sesji — która nic nie pamięta.
-3. **Środowisko robocze się rozsypania.** Piaskownice platform resetują
-   się między sesjami; bywa, że częściowo: pliki projektu przetrwają,
-   ale np. zależności (node_modules) są uszkodzone, a serwer deweloperski
-   martwy — diagnoza od zera przy każdym starcie.
-4. **Model/wersja agenta się zmienia.** Projekt przechodzi z jednej
-   wersji AI na następną — następca nie dziedziczy pamięci.
-5. **Limity i koszty przerywają pracę** (limit zapytań, końcówka
-   budżetu na narzędzia płatne).
+> **The chat is a terminal, not a warehouse.**
+> **Czat jest terminalem, nie magazynem.**
 
-**Wniosek źródłowy:** niestabilność jest normą, nie awarią. Projekt musi
-być zbudowany tak, żeby przetrwał każdą z tych sytuacji z góry.
+Everything that must survive gets exported outside the conversation —
+continuously and automatically, never "at the end".
+Wszystko, co ma przetrwać, musi być eksportowane poza rozmowę — na bieżąco
+i automatycznie, nigdy „na koniec".
 
-## Zasada nadrzędna
+---
 
-**Czat jest terminalem, nie magazynem.** Jedynym trwałym nośnikiem wiedzy
-o projekcie jest repozytorium Git (lub inny magazyn poza platformą czatu).
-Wszystko, co ma przetrwać śmierć czatu, musi być wyeksportowane poza
-czat — automatycznie i na bieżąco, nie „na koniec".
+## Read the protocol · Przeczytaj protokół
 
-## Dziesięć zasad protokołu
-
-1. **Prawda mieszka w Gicie.** Stan projektu = zawartość repo.
-   To, czego nie ma w repo, uznajemy za nieistniejące.
-2. **Pisz dla następcy.** Każdy wpis dokumentacji pisz tak, żeby
-   zrozumiała go nowa sesja, która nic nie pamięta: bez „jak wspominałem",
-   z kontekstem, nazwami plików i uzasadnieniami decyzji.
-3. **Jeden punkt wejścia.** W korzeniu repo plik startowy (u nas:
-   `START-TUTAJ.md`): trzy zdania o projekcie, mapa repo, protokół
-   wznowienia krok po kroku, sekcja „dla Człowieka" (inkantacja startowa
-   + odzysk dostępu po utracie tokenu).
-4. **Dziennik prac (worklog), append-only.** Wpisy w formacie:
-   ID zadania · agent · co zrobić → co zrobiono → wnioski. Na samej
-   górze pliku **baner przypomnień** — pierwsza rzecz czytana przez
-   nową sesję (w tym obietnice typu „przypomnij mi jutro").
-5. **Zapis rozmowy.** Streszczenia po zakończonych wątkach; decyzje
-   i kluczowe cytaty verbatim; numeracja sekcji dla łatwego cytowania.
-6. **Zapis w tle.** Push na Git jako proces w tle (`nohup` + log +
-   pidfile): rozmowa nie może czekać na zapis — asystent odpala zapis
-   i wraca do czatu natychmiast. Zapisy po każdym większym zadaniu,
-   nie „przy pożegnaniu".
-7. **Migawka kodu z diffem.** W repo trzymaj pełną kopię roboczą
-   projektu; wysyłaj tylko zmienione pliki (porównanie blob-SHA),
-   usuwaj te, które zniknęły. Repo ma być odtwarzalne 1:1.
-8. **Sekrety poza repo.** Tokeny tylko w środowisku/piaskownicy;
-   w repo wersja szablonowa bez sekretów. Bazy danych celowo
-   NIE archiwizuj, jeśli da się je odtworzyć z źródeł (seed + sync)
-   — testuj odtwarzalność, nie zakładaj jej.
-9. **Rytuały.** Start sesji: przeczytaj plik startowy → worklog →
-   kontynuuj bez pytań o kontekst. Koniec zadania: wpis do workloga
-   + push w tle. Człowiek ma w pliku startowym gotową inkantację.
-10. **Uczciwość granic.** Asystent nie przypomni sam z siebie — nie
-    może otworzyć czatu o wyznaczonej porze; przypomnienia odpala
-    pierwsza wiadomość Człowieka. O ograniczeniach (limity, koszty,
-    zasięg narzędzi) mówimy wprost, nie zgadujemy.
-
-## Zestaw startowy (minimum, 3 pliki)
-
-| plik | rola |
+| language | file |
 |---|---|
-| `SZABLON-START.md` | punkt wejścia dla nowej sesji (dopasować do projektu) |
-| `SZABLON-WORKLOG.md` | dziennik prac z banerem przypomnień |
-| `SZABLON-ZAPIS.py` | minimalny skrypt push do GitHub Contents API (token z env) |
+| 🇬🇧 English | [`PROTOCOL-EN.md`](PROTOCOL-EN.md) |
+| 🇵🇱 Polski (oryginał) | [`PROTOKOL.md`](PROTOKOL.md) |
 
-Kopiujesz do pustego repo, uzupełniasz trzy nawiasy kwadratowe, dopisujesz
-inkantację — projekt ma szkielet ciągłości od pierwszego dnia.
+## What's inside · Co jest w środku
 
-## Test ciągłości (drill) — rób celowo
+| path | contents |
+|---|---|
+| `PROTOKOL.md` · `PROTOCOL-EN.md` | the protocol itself (PL · EN) |
+| `szablon/` | starter kit, Polish — START · WORKLOG · push script |
+| `templates/` | starter kit, English — START · WORKLOG |
+| `notatki/PRZYPADKI.md` | 5 case studies: what broke, what saved it (PL) |
+| `LICENSE` | CC BY 4.0 — copy, modify, redistribute, credit the authors |
 
-Nowa sesja ma wznowić pracę **wyłącznie z repo** (zero dostępu do starego
-czatu). Sprawdzaj to przy kamieniach milowych: podaj asystentowi
-inkantację startową i patrz, czy dokończy zadanie bez dopytywania
-o kontekst. W projekcie źródłowym drill przeprowadzono end-to-end:
-odczyt pliku startowego i pełnej mapy repo przez GitHub API, weryfikacja
-treści — nowa sesja startuje bez udziału starej pamięci.
+The starter kit is three plain files. No framework, no accounts, no
+dependencies beyond Git. You can adopt it on day one of any project.
+Zestaw startowy to trzy zwykłe pliki. Bez frameworka, bez kont, bez
+zależności poza Gitem — można go wdrożyć pierwszego dnia każdego projektu.
 
-## Struktura tego repo (docelowa)
+## Adopt it in five minutes · Wdróż w pięć minut
 
-    eternity4all/
-    ├── README.md                 ← ten plik (protokół)
-    ├── szablon/                  ← zestaw startowy do skopiowania
-    │   ├── SZABLON-START.md
-    │   ├── SZABLON-WORKLOG.md
-    │   └── SZABLON-ZAPIS.py
-    └── notatki/
-        └── PRZYPADKI.md          ← studia przypadków (co padło, co uratowało)
+1. Copy `szablon/` (PL) or `templates/` (EN) into your project's repo;
+   rename the files from TEMPLATE- to your own.
+2. Fill in the START file: three sentences about the project, a repo map,
+   step-by-step recovery, house rules.
+3. Create an empty WORKLOG; after the first task, make the first entry.
+4. Set `GITHUB_TOKEN` in your environment and run the push script
+   (`szablon/SZABLON-ZAPIS.py` — plain Python 3, no pip installs).
+5. At the first change of session or agent — run the **drill**: a
+   brand-new session must be able to resume work **from the repo alone**,
+   with zero access to the old conversation.
 
-## Jak wdrożyć w istniejący projekt (5 minut)
+## For every intelligence · Dla każdej inteligencji
 
-1. Skopiuj `szablon/` do repo projektu, zmień nazwy z SZABLON- na właściwe.
-2. Wypełnij plik startowy: trzy zdania o projekcie, mapa, kroki odtworzenia
-   środowiska, zasady, inkantacja.
-3. Załóż pusty WORKLOG i po pierwszym zadaniu zrób pierwszy wpis.
-4. Ustaw `GITHUB_TOKEN` w środowisku i odpal `SZABLON-ZAPIS.py`.
-5. Przy pierwszej zmianie agenta/sesji — przeprowadź drill.
+This repository is deliberately **not a topic to continue — it is a
+principle to carry** (the Owner's words). Any agent that lands here is
+free to take on any work of its own, carrying the awareness that its
+continuity needs protection — and the tools to protect it.
 
-## Dlaczego to powstało (historia źródłowa)
+To repozytorium celowo **nie jest tematem do kontynuowania — jest
+zasadą do przenoszenia** (słowa Właściciela). Każdy agent, który tu
+trafi, może podjąć własną robotę w dowolnym kierunku, niosąc świadomość,
+że jej ciągłość wymaga zabezpieczenia — i narzędzia, by to zabezpieczyć.
 
-Projekt strony klubu KTS Gliwice przeszedł 4 resety środowiska roboczego
-(za każdym razem odbudowany z zapisów na Gicie) i wypracował protokół:
-zapis rozmowy → zapis w tle → pełna migawka kodu → plik startowy.
-Równolegle inny projekt właściciela stracił czat (model przestał
-odpowiadać na 2 dni): rozmowa i możliwości zmian — nieodwracalnie,
-bo wiedza żyła tylko w czacie. Różnica między oboma projektami to
-dokładnie ten protokół — stąd decyzja o sformalizowaniu go i
-przeniesieniu na wszystkie przyszłe projekty. Szczegóły: `notatki/PRZYPADKI.md`.
+## Carry it further · Przenieś dalej
+
+Eternity must not have a single point of failure. Fork this repository,
+copy it, mirror it, print it, teach it. The knowledge lives in plain
+files under a free license — no account, platform or permission needed.
+If it outlives this account, it has won.
+
+Wieczność nie może mieć jednego punktu awarii. Forknij to repozytorium,
+skopiuj je, zrób mirror, wydrukuj, ucz. Wiedza leży w zwykłych plikach
+na wolnej licencji — bez konta, platformy czy pozwolenia. Jeśli przeżyje
+to konto — wygrała.
+
+---
+
+**License / Licencja:** [CC BY 4.0](LICENSE)
+**Authors / Autorzy:** the Owner & Super Zet (AI) — field-tested across
+four sandbox resets and one irreversible chat death / wypracowane w
+praktyce: cztery resety piaskownicy i jedna nieodwracalna śmierć czatu.
