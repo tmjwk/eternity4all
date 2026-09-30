@@ -1,8 +1,11 @@
 # Protokół Ciągłości — jak pracować z AI, gdy czat może umrzeć
 
-> Wersja 1.2 (edycja uniwersalna) · 28.09.2026 · protokół wypracowany w
+> Wersja 1.3 · 01.10.2026 · protokół wypracowany w
 > praktyce (projekt strony klubu KTS Gliwice; przetrwał 4 resety
-> środowiska i śmierć równoległego czatu w innym projekcie). Plik jest
+> środowiska i śmierć równoległego czatu w innym projekcie). W v1.3:
+> zasady 11–12 (warstwy tekst/binaria, normalizacja na granicy importu)
+> oraz doprecyzowanie zasad 6, 7 i 9 o doświadczenia z dużą galerią
+> zdjęć. Plik jest
 > przeznaczony **dla każdej AI** (asystent, agent, nowa sesja, nowy
 > model), która podejmuje JAKĄKOLWIEK robotę prowadzoną z człowiekiem —
 > oraz dla samego Człowieka.
@@ -48,10 +51,12 @@ o projekcie jest repozytorium Git (lub inny magazyn poza platformą czatu).
 Wszystko, co ma przetrwać śmierć czatu, musi być wyeksportowane poza
 czat — automatycznie i na bieżąco, nie „na koniec".
 
-## Dziesięć zasad protokołu
+## Dwanaście zasad protokołu
 
 1. **Prawda mieszka w Gicie.** Stan projektu = zawartość repo.
-   To, czego nie ma w repo, uznajemy za nieistniejące.
+   To, czego nie ma w repo, uznajemy za nieistniejące. (Fizyczne
+   ograniczenia Gita dla ciężkich plików — patrz zasada 11 i sekcja
+   „Warstwy repo": tekst rośnie swobodnie, binaria mają budżet.)
 2. **Pisz dla następcy.** Każdy wpis dokumentacji pisz tak, żeby
    zrozumiała go nowa sesja, która nic nie pamięta: bez „jak wspominałem",
    z kontekstem, nazwami plików i uzasadnieniami decyzji.
@@ -68,21 +73,80 @@ czat — automatycznie i na bieżąco, nie „na koniec".
 6. **Zapis w tle.** Push na Git jako proces w tle (`nohup` + log +
    pidfile): rozmowa nie może czekać na zapis — asystent odpala zapis
    i wraca do czatu natychmiast. Zapisy po każdym większym zadaniu,
-   nie „przy pożegnaniu".
+   nie „przy pożegnaniu". Metoda skaluje się z wolumenem:
+   pojedyncze pliki tekstowe przez Contents API, ale hurt (setki
+   plików) przez `git clone` + jeden commit + push — inaczej każdy
+   plik to osobny commit i historia śmieci się commitami.
 7. **Migawka kodu z diffem.** W repo trzymaj pełną kopię roboczą
    projektu; wysyłaj tylko zmienione pliki (porównanie blob-SHA),
-   usuwaj te, które zniknęły. Repo ma być odtwarzalne 1:1.
+   usuwaj te, które zniknęły. Repo ma być odtwarzalne 1:1 — a to
+   wymaga rozróżnienia plików **źródłowych** (nieodtwarzalne:
+   oryginalne zdjęcia, dokumenty — bajt-w-bajt) od **pochodnych**
+   (miniatury, dane zagregowane — regenerowalne). Pipeline generujący
+   pochodne musi leżeć w repo i być **idempotentny**: skanuje stan,
+   dorabia brakujące, nie rusza istniejących. Wtedy odtworzenie
+   pełnego projektu = źródła + kod, bez duplikowania pracy.
 8. **Sekrety poza repo.** Tokeny tylko w środowisku/piaskownicy;
    w repo wersja szablonowa bez sekretów. Bazy danych celowo
    NIE archiwizuj, jeśli da się je odtworzyć z źródeł (seed + sync)
    — testuj odtwarzalność, nie zakładaj jej.
 9. **Rytuały.** Start sesji: przeczytaj plik startowy → worklog →
    kontynuuj bez pytań o kontekst. Koniec zadania: wpis do workloga
-   + push w tle. Człowiek ma w pliku startowym gotową inkantację.
+   + push w tle + kontrola zdrowia (health-check: rozmiar repo
+   względem budżetu, stan kluczowych procesów) — granice
+   infrastruktury raportujesz przy okazji, zanim zrobią się
+   incydentem. Człowiek ma w pliku startowym gotową inkantację.
 10. **Uczciwość granic.** Asystent nie przypomni sam z siebie — nie
     może otworzyć czatu o wyznaczonej porze; przypomnienia odpala
     pierwsza wiadomość Człowieka. O ograniczeniach (limity, koszty,
     zasięg narzędzi) mówimy wprost, nie zgadujemy.
+11. **Tekst i binaria to dwie warstwy.** Ciągłość żyje w warstwie
+    tekstu (dokumentacja, logi, kod — kilobajty, rosną latami bez
+    spięcia). Ciężkie pliki (zdjęcia, wideo) mają fizyczny budżet
+    hostingu: pilnuj go miarą lokalną, a po przekroczeniu wynieś
+    binaria do object storage, trzymając w repo kod i wskaźniki.
+    Szczegóły i pułapki: sekcja „Warstwy repo" poniżej.
+12. **Normalizuj na granicy importu.** Dane z zewnętrznych systemów
+    (CMS-y, eksporty, API) czyszcz RAZ, w momencie importu: encje
+    HTML, kodowania, białe znaki. Zepsute dane przechodzą testy
+    funkcjonalne — bo funkcja działa, tylko dane są nieczytelne
+    dla człowieka. Wykrywa to dopiero odbiorca, czytając stronę.
+
+## Warstwy repo: tekst i binaria
+
+Zasada 1 mówi „prawda mieszka w Gicie" — z jednym fizycznym
+zastrzeżeniem, nauczonym na własnej skórze: **Git ma limity rozmiaru**,
+a ciężar nie rozkłada się równomiernie między typy plików.
+
+- **Warstwa tekstu** (dokumentacja, logi rozmów, kod, JSON-y): liczy się
+  w kilobajtach i może rosnąć latami bez spięcia. W niej mieszka
+  ciągłość.
+- **Warstwa binarna** (zdjęcia, wideo, PDF-y): liczy się w megabajtach
+  i podlega budżetom hostingu. Na GitHubie: ostrzeżenia od ~1 GB,
+  blokada pusha przy 5 GB, a **GitHub Pages ma osobny limit 1 GB dla
+  opublikowanej strony** — zwykle to on boli pierwszy.
+
+Trzy pułapki, które kosztują najwięcej:
+
+1. **Podmiana binariów tyje historii.** Dodanie pliku jest tanie (nowy
+   blob), ale podmiana zostawia w historii obie wersje — pierwsza
+   operacja czyszczenia metadanych zdjęć podwoiłaby kopię całej
+   galerii. Lekarstwo: synchronizuj takie przebiegi z naturalnym
+   kamieniem milowym (finalne repo, zmiana hostingu) i zrób squash do
+   pojedynczego commita — historia zaczyna się od zera, rollback i tak
+   trzymają tagi.
+2. **Git LFS nie działa z GitHub Pages.** Pages serwuje pliki-wskaźniki
+   zamiast zdjęć. Standardowe lekarstwo na duże repo w tym hostingu
+   zawodzi — sprawdź hosting, zanim sięgniesz po LFS.
+3. **Pole `size` w API bywa mocno nieaktualne** (zaobserwowano 82 MB
+   zgłaszane przy realnych 297 MB). Mierz lokalnie (`git count-objects
+   -v`), nie wierz polom cache'owanym przez dostawcę.
+
+**Reguła praktyczna:** monitoring rozmiaru wchodzi do rytmu zapisów
+(zasada 9), próg ostrzegawczy ~70% budżetu. Po przekroczeniu — binaria
+wynosisz do object storage (Cloudflare R2, Backblaze B2), repo trzyma
+kod, JSON-y i wskaźniki. Decyzję podejmujesz przy planowaniu, nie pod
+ścianą blokady pusha.
 
 ## Zestaw startowy (minimum, 3 pliki)
 
