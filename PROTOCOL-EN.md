@@ -1,9 +1,12 @@
 # The Continuity Protocol — how to work with AI when the chat can die
 
-> Version 1.2 (universal edition) · 28 Sep 2026 · a protocol forged in
+> Version 1.3 · 1 Oct 2026 · a protocol forged in
 > practice (the KTS Gliwice club website project; it survived 4
 > environment resets and the death of a parallel chat in another
-> project). This file is intended **for every AI** (assistant, agent,
+> project). v1.3 adds rules 11–12 (text/binary layers, normalization
+> at the import boundary) and sharpens rules 6, 7 and 9 with lessons
+> from a large photo gallery (v1.2, universal edition: 28 Sep 2026).
+> This file is intended **for every AI** (assistant, agent,
 > new session, new model) taking on ANY work done with a human — and for
 > the Human themselves.
 >
@@ -49,10 +52,13 @@ chat platform). Everything that must survive the death of the chat has
 to be exported beyond the chat — automatically and continuously, not
 "at the end".
 
-## The ten rules of the protocol
+## The twelve rules of the protocol
 
 1. **Truth lives in Git.** The state of the project = the contents of
    the repo. Whatever is not in the repo we treat as non-existent.
+   (Git has physical limits for heavy files — see rule 11 and the
+   "Repository layers" section: text grows freely, binaries have a
+   budget.)
 2. **Write for the successor.** Write every documentation entry so
    that a new session which remembers nothing can understand it: no
    "as I mentioned", include context, file names and the reasoning
@@ -71,21 +77,82 @@ to be exported beyond the chat — automatically and continuously, not
    (`nohup` + log + pidfile): the conversation cannot wait for the
    save — the assistant starts the save and returns to the chat
    immediately. Saves after every major task, not "at farewell".
+   The method scales with volume: single text files go through the
+   Contents API, but bulk (hundreds of files) through `git clone` +
+   one commit + push — otherwise every file becomes its own commit
+   and the history fills with commit spam.
 7. **Code snapshot with a diff.** Keep a full working copy of the
    project in the repo; send only changed files (blob-SHA comparison),
-   delete the ones that vanished. The repo must be restorable 1:1.
+   delete the ones that vanished. The repo must be restorable 1:1 —
+   which requires telling **source** files (irreplaceable: original
+   photos, documents — byte-for-byte) apart from **derived** ones
+   (thumbnails, aggregated data — regenerable). The pipeline that
+   generates derived files must live in the repo and be
+   **idempotent**: it scans state, adds what's missing, never touches
+   what exists. Then restoring the full project = sources + code,
+   with no duplicated work.
 8. **Secrets outside the repo.** Tokens only in the environment/sandbox;
    in the repo, a template version without secrets. Deliberately do
    NOT archive databases if they can be rebuilt from sources (seed +
    sync) — test restorability, do not assume it.
 9. **Rituals.** Session start: read the start file → worklog →
    continue without asking about context. Task end: worklog entry +
-   background push. The Human has a ready-made incantation in the
-   start file.
+   background push + a health check (repo size against its budget,
+   the state of key processes) — infrastructure limits get reported
+   along the way, before they become incidents. The Human has a
+   ready-made incantation in the start file.
 10. **Honesty about limits.** The assistant will not remind on its
     own — it cannot open a chat at a set time; reminders fire with the
     Human's first message. About limitations (limits, costs, tool
     reach) we speak plainly; we do not guess.
+11. **Text and binaries are two layers.** Continuity lives in the
+    text layer (documentation, logs, code — kilobytes, growing for
+    years without friction). Heavy files (photos, video) have a
+    physical hosting budget: watch it with a local measure, and
+    once exceeded, move the binaries to object storage while the
+    repo keeps code and pointers. Details and traps: the
+    "Repository layers" section below.
+12. **Normalize at the import boundary.** Data from external systems
+    (CMSes, exports, APIs) gets cleaned ONCE, at import time: HTML
+    entities, encodings, whitespace. Corrupted data passes
+    functional tests — the function works, only the data is
+    unreadable for a human. The recipient discovers it by reading
+    the page.
+
+## Repository layers: text and binaries
+
+Rule 1 says "truth lives in Git" — with one physical caveat, learned the
+hard way: **Git has size limits**, and the weight is not distributed
+evenly across file types.
+
+- **The text layer** (documentation, conversation logs, code, JSONs):
+  counts in kilobytes and can grow for years without friction. This is
+  where continuity lives.
+- **The binary layer** (photos, video, PDFs): counts in megabytes and
+  is subject to hosting budgets. On GitHub: warnings from ~1 GB, push
+  blocked at 5 GB, and **GitHub Pages has a separate 1 GB limit for the
+  published site** — usually the first one to hurt.
+
+Three traps that cost the most:
+
+1. **Replacing binaries fattens the history.** Adding a file is cheap (a
+   new blob), but a replacement leaves both versions in history — the
+   first metadata-cleaning pass on photos would have doubled the copy of
+   an entire gallery. The fix: synchronize such passes with a natural
+   milestone (final repo, hosting change) and squash to a single commit
+   — history starts from zero, and rollbacks are held by tags anyway.
+2. **Git LFS does not work with GitHub Pages.** Pages serves the pointer
+   files instead of photos. The standard cure for large repos fails on
+   this hosting — check your hosting before reaching for LFS.
+3. **The `size` field in the API is often stale** (observed: 82 MB
+   reported with 297 MB actual). Measure locally (`git count-objects
+   -v`); do not trust provider-cached fields.
+
+**Practical rule:** size monitoring joins the saving rhythm (rule 9),
+warning threshold ~70% of the budget. Past that — binaries move to
+object storage (Cloudflare R2, Backblaze B2); the repo keeps code, JSONs
+and pointers. You make the decision while planning, not against the
+wall of a blocked push.
 
 ## The starter kit (minimum, 3 files)
 
@@ -173,3 +240,28 @@ of failure.
    a fresh session resumed from the repo alone, end-to-end, via the
    GitHub API. It passed — and caught a small detail (letter case in
    a phrase), proving literal verification beats assumption.
+6. **HTML entities no test could see (normalize at the boundary).**
+   Album titles imported from an old WordPress came with HTML entities
+   (`&quot;GILU&quot;`); the frontend additionally escaped them on render —
+   double escaping. No functional test caught it: the function worked,
+   only the data was unreadable for humans. Detected by the recipient
+   reading the page. Fix had to cover the data source and both JSON
+   copies at once. → rule 12.
+7. **The repo softly approaching its limits (layers and budgets).**
+   A ~300 MB photo repo; the API `size` field claimed 82 MB (stale
+   cache — a monitoring based on it would be decorative). Object
+   analysis: 0 dead blobs so far, but the planned EXIF-cleaning pass
+   would have replaced every photo, fattening history by ~270 MB in one
+   move. Git LFS ruled out (Pages serves pointers); Pages has its own
+   lower 1 GB limit. Fix: local `git count-objects` monitoring at ~70%
+   threshold, EXIF pass synchronized with a squash into a fresh final
+   repo, object storage as the escape hatch. → rules 9, 11 + the
+   "Repository layers" section.
+8. **An idempotent pipeline (an architectural decision before the
+   need).** Instead of a one-off script for 916 files, a pipeline was
+   built: scans directories, adds missing thumbnails and LQIPs, never
+   touches existing ones; source-agnostic (old WP, a Facebook import, a
+   disk — it does not care). When the Facebook-import question arrived
+   later, the answer was: drop the files in, run the pipeline — zero
+   rework. Originals stay byte-for-byte; thumbnails are derived,
+   regenerable at any time. → rule 7.
