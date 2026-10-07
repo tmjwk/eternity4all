@@ -4,7 +4,11 @@
 #
 # 1. [Urgent thing to do — e.g. an unfinished deployment.]
 # 2. [A promise to the user — e.g. "remind about X".]
-# 3. Protocol: this file is read at the start of every session; keep
+# 3. Communication arrangements with the Human — form, language, tone
+#    [e.g. informal first-name address, direct, no jargon]. "Soft"
+#    arrangements are the first to die in a context compression —
+#    keep them HERE, not only in the chat's memory.
+# 4. Protocol: this file is read at the start of every session; keep
 #    the banner current (removed = done). Honest note: the assistant
 #    cannot open a chat on its own — a reminder fires with the user's
 #    first message.
