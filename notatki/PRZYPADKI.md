@@ -76,63 +76,29 @@ potwierdziło wartość dosłownej weryfikacji zamiast zakładania.
 
 **Wniosek:** ciągłość się testuje jak wszystko inne — end-to-end,
 od odczytu z repo do podjęcia pracy, nie „na oko".
-## Przypadek 6: encje HTML, których nie widziały testy (normalizacja na granicy)
 
-**Kontekst:** galeria 131 albumów zaimportowana ze starego WordPressa;
-tytuły wpisów przyszły z encjami HTML („&quot;GILU&quot;" zamiast
-„"GILU""). Frontend dodatkowo escapował stringi przy renderze —
-podwójne escapowanie.
+## Przypadek 6: kompresja kontekstu w trakcie sesji (regres formy i „zapominanie")
 
-**Przebieg:** przez lata nikt tego nie zauważył, bo żaden test
-funkcjonalny nie łapie tej klasy błędu: funkcja działa, dane się
-renderują — tylko żródło danych było nieczytelne dla człowieka.
-Wykrył to odbiorca, czytając stronę („masz takie błędy w galerii...").
-Naprawa musiała objąć źródło danych i obie kopie JSON-a naraz —
-inaczej problem wróciłby przy najbliższej przebudowie.
+**Kontekst:** długi projekt na platformie, która przy przepełnieniu
+okna kontekstowego sama skraca starszą część rozmowy do streszczenia
+— sesja formalnie trwa dalej.
 
-**Wniosek → zasada 12:** normalizuj dane RAZ, na granicy importu;
-utrzymuj jedno źródło prawdy, a okresowy przegląd efektu końcowego
-„gołym okiem" wychwytuje to, czego nie widzą testy automatyczne.
+**Przebieg:** po skrócie asystent zachował twardy stan projektu
+(wersje plików, podjęte decyzje — bo te żyły w repo), ale stracił
+ustalenia „miękkie": dwukrotnie wrócił do formalnej formy zwracania
+się do właściciela (per „Pan"), mimo wielotygodniowej umowy o formie
+bezpośredniej, i zapomniał o bieżącej dyrektywie archiwizacji rozmowy.
+Oba regresy wyłapał Człowiek — zanim asystent sam zauważył, że coś
+jest nie tak. Powtórzony rytuał startowy (plik startowy → dziennik
+prac → baner) przywrócił pełny obraz w kilka minut.
 
-## Przypadek 7: repo miękko dobija do limitów (warstwy i budżety)
+**Szkoda:** dwie tury rozmowy na wyłapanie i naprawę regresów;
+w samym projekcie zero strat — ten żył w repo.
 
-**Kontekst:** projekt z ~300 MB zdjęć w repo; właściciel pyta o
-ostrzeżenia GitHuba (1 GB) i blokadę pusha (5 GB).
-
-**Przebieg:** definitywny pomiar (barę clone) pokazał 297 MB przy polu
-`size` w API równym 82 MB — cache dostawcy mocno zaniżał, więc
-monitoring oparty o API byłby fasadowy. Analiza obiektów: 0 martwych
-blobów, czyli historia dotąd czysta. Ale zaplanowany przebieg
-czyszczenia EXIF podmieniłby każde zdjęcie — i historia zaczęłaby
-tyć o ~270 MB w jednym ruchu. Git LFS odpadł (GitHub Pages serwuje
-wskaźniki zamiast plików), a Pages ma własny, niższy limit 1 GB
-dla opublikowanej strony.
-
-**Rozwiązanie:** monitoring lokalnym `git count-objects` w rytmie zapisów
-(próg ~70% budżetu); czyszczenie EXIF zsynchronizowane ze squaszem do
-finalnego repo (pojedynczy commit, historia od zera); wentyl bezpieczeństwa
-= object storage dla binariów, gdyby galeria urosła ponad budżet.
-
-**Wniosek → zasady 9, 11 + sekcja „Warstwy repo":** binaria mają
-budżet i trzeba go pilnować miarą lokalną; operacje podmieniające
-ciężkie pliki synchronizuj z resetem historii.
-
-## Przypadek 8: pipeline idempotentny (decyzja architektoniczna przed potrzebą)
-
-**Kontekst:** galeria ładuje oryginalne zdjęcia (298 KB średnio) do
-siatki miniaturek; właściciel chce WebP + blur-up. Pytanie otwarte:
-co będzie, gdy źródłem zdjęć stanie się Facebook?
-
-**Przebieg:** zamiast jednorazowego skryptu „pod 916 plików" zbudowano
-pipeline: skanuje katalogi, dorabia brakujące miniatury i LQIP-y,
-istniejących nie rusza; źródło-agnostyczny (nie interesuje go, skąd
-pliki się wzięły — stary WP, import z FB, dysk). Gdy później doszło
-pytanie o import z FB, odpowiedź była: „wrzucasz pliki, odpalasz
-pipeline, działa" — zero przeróbek. Oryginały plików źródłowych
-zostały bajt-w-bajt (enkodowanie odwracalne, metadane nietknięte);
-miniatury są plikami pochodnymi, regenerowalnymi w każdej chwili.
-
-**Wniosek → zasada 7:** rozdziel pliki źródłowe od pochodnych;
-pipeline pochodnych trzymaj w repo, idempotentny i agnostyczny wobec
-źródła — decyzję architektoniczną podejmujesz PRZED potrzebą,
-bo po jej wystąpieniu jest już za drogo na refaktor.
+**Wniosek → zasada 9:** kompresja kontekstu = nowa sesja — rytuał
+startowy powtarza się także po skrócie W TRAKCIE formalnie tej samej
+sesji. Ustalenia „miękkie" (forma, ton, bieżące dyrektywy) wpisuj do
+banera dziennika prac — streszczenie gubi je pierwsze, a nie są ani
+zadaniem, ani obietnicą terminową. Drugi wniosek: Człowiek bywa
+szybszym czujnikiem dymu niż asystent — nagły regres formy to sygnał
+„odśwież się z repo", nie powód do pretensji.
