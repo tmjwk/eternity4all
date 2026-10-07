@@ -29,7 +29,9 @@ it.] Secrets NEVER inside file contents.
 
 **Step 1 — context.** Read in order: the work log (the banner at the
 top!), the conversation-log map, the indicated sections. Key
-non-negotiable decisions: [3–5 project decisions].
+non-negotiable decisions: [3–5 project decisions]. The same ritual
+applies after a mid-session context compression (a shortened
+conversation = a new session: repeat this step from the top).
 
 **Step 2 — environment recovery.** [Environment: what to initialize,
 which commands, how to verify it works. Include the lesson:
@@ -58,5 +60,10 @@ important changes: a full background save. [Commands.]
 - Lost the PAT? GitHub → Settings → Developer settings → Personal
   access tokens → generate a new one (revoke the old). The key is the
   GitHub account, not any single token.
+- The assistant suddenly "forgets" arrangements or changes form (e.g.
+  switches to formal address after always being direct)? That is most
+  often a symptom of context compression, not ill will. Say: "refresh
+  yourself from the repo (start file → work log)" — the start ritual
+  will be repeated and the context will return.
 - [What is deliberately NOT archived and why — e.g. a database that
   rebuilds automatically.]
