@@ -29,6 +29,8 @@ Sekrety NIGDY w treści plików.
 **Krok 1 — kontekst.** Przeczytaj po kolei: dziennik prac (baner na górze!),
 mapę zapisu rozmowy, wskazane sekcje. Kluczowe ustalenia:
 [3–5 niepodlegających negocjacji decyzji projektowych].
+Ten sam rytuał obowiązuje po kompresji kontekstu w trakcie sesji
+(skrót rozmowy = nowa sesja: powtórz ten krok od początku).
 
 **Krok 2 — odtworzenie środowiska.** [Środowisko: co zainicjować, jakie
 polecenia, jak sprawdzić, że działa. Uwzględnij lekcję: środowiska między
@@ -56,5 +58,10 @@ Po ważnych zmianach: pełny zapis w tle. [Polecenia.]
 - Zgubiłeś PAT? GitHub → Settings → Developer settings → Personal access
   tokens → wygeneruj nowy (stary unieważnij). Kluczem jest konto GitHub,
   nie pojedynczy token.
+- Asystent nagle „zapomina" ustaleń albo zmienia formę (np. zwraca się
+  formalnie, choć zawsze było bezpośrednio)? To najczęściej objaw
+  kompresji kontekstu, nie zła wola. Powiedz: „odśwież się z repo
+  (plik startowy → dziennik prac)" — rytuał startowy zostanie
+  powtórzony i kontekst wróci.
 - [Co jest celowo NIE archiwizowane i dlaczego — np. baza odtwarzalna
   automatycznie.]
