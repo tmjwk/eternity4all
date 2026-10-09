@@ -102,3 +102,49 @@ banera dziennika prac — streszczenie gubi je pierwsze, a nie są ani
 zadaniem, ani obietnicą terminową. Drugi wniosek: Człowiek bywa
 szybszym czujnikiem dymu niż asystent — nagły regres formy to sygnał
 „odśwież się z repo", nie powód do pretensji.
+
+## Przypadek 7: mapa zapisu, która nie rosła (plik istnieje ≠ plik zarchiwizowany)
+
+**Kontekst:** migawka projektu wysyłana skryptem z JAWNĄ LISTĄ plików
+(mapą zapisu) — push po kolei z porównaniem blob-SHA; projekt w fazie
+najintensywniejszego wzrostu: dziennie powstawało kilkanaście nowych
+plików klasy „produkt" (wyniki analiz, skrypty, zrzuty ekranu).
+
+**Przebieg:** mapa nie była dopisywana od wielu zadań — nowe pliki
+powstawały w piaskownicy i tam kończyły żywot. Asystent i właściciel
+widzieli je na dysku („są!"), więc nic nie alarmowało. Dziura wyszła
+na jaw dopiero przy weryfikacji PO STRONIE REPO (odczyt surowych URL-i
+przez API): kilkanaście plików z ostatnich zadań zwracało 404. Zapis
+formalnie „działał" — po prostu zapisywał nie to, co istniało.
+
+**Szkoda:** utraty danych nie było (piaskownica żyła), ale migawka
+była cicho dziurawa — reset środowiska w tym momencie oznaczałby
+nieodtwarzalność 1:1 i powtórzenie wielodniowej pracy.
+
+**Wniosek → zasady 1, 7, 9:** mapa zapisu jest CZĘŚCIĄ migawki, nie
+szczegółem implementacyjnym — nowy plik klasy „produkt" dopisuj do
+mapy w chwili tworzenia, a rytuał końca zadania ma krok „sprawdź mapę".
+Odwrotnie: kompletność migawki weryfikuj zawsze OD STRONY REPO (tam
+mieszka prawda), nigdy od strony katalogu roboczego — katalog potrafi
+udawać, że wszystko jest już zapisane.
+
+## Przypadek 8: emoji w nazwie pliku kontra API (nazwa pliku to interfejs)
+
+**Kontekst:** wypychanie paczki plików na repo przez GitHub Contents
+API; wśród okładek znalazła się nazwa z emoji i znakami specjalnymi
+(wariant: „…2025-2026🏓‼️.webp" — poprawna, czytelna dla człowieka,
+zweryfikowana graficznie przed deployem).
+
+**Przebieg:** push padł w połowie z UnicodeEncodeError — skrypt wklejał
+ścieżkę surowo do URL-a, a klient odmówił zakodowania znaków spoza
+ASCII. Błąd był GŁOŚNY (fail fast), więc nic nie utracono; łata =
+jawny percent-encoding ścieżki przy budowaniu URL-a (dla nazw czysto
+ASCII zachowanie identyczne). Ten sam projekt złapał wcześniej
+bliźniaczy problem od strony ODCZYTU — ta sama granica piaskownica–repo,
+dwa kierunki, jedna lekcja.
+
+**Wniosek → zasada 7:** nazwa pliku to interfejs między systemami.
+Na styku z API nazywaj pliki defensywnie (ASCII), a gdy znaki narodowe
+czy emoji są wpisane w treść projektu — koduj ścieżki jawnie
+i testuj przesyłkę end-to-end po stronie repo. Weryfikacja „na oko"
+w katalogu roboczym tego błędu nie widzi; weryfikacja w repo — tak.
