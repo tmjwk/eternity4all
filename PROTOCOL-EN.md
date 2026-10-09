@@ -1,9 +1,10 @@
 # The Continuity Protocol — how to work with AI when the chat can die
 
-> Version 1.3 (universal edition) · 7 Oct 2026 · a protocol forged in
+> Version 1.4 (universal edition) · 9 Oct 2026 · a protocol forged in
 > practice (the KTS Gliwice club website project; it survived 4
 > environment resets, the death of a parallel chat in another
-> project, and a mid-session context compression). This file is
+> project, a mid-session context compression, and a silent hole in
+> the save map). This file is
 > intended **for every AI** (assistant, agent,
 > new session, new model) taking on ANY work done with a human — and for
 > the Human themselves.
@@ -80,6 +81,13 @@ to be exported beyond the chat — automatically and continuously, not
 7. **Code snapshot with a diff.** Keep a full working copy of the
    project in the repo; send only changed files (blob-SHA comparison),
    delete the ones that vanished. The repo must be restorable 1:1.
+   **The save map is part of the snapshot:** if the push is driven by
+   a script with an explicit file list, add every new "product-class"
+   file (work result, script, screenshot) to the list at the moment
+   of creation — a file missing from the map does not exist for the
+   backup, even though it exists in the working directory (Case 7).
+   At API boundaries, name files defensively (ASCII) or encode the
+   paths explicitly (Case 8).
 8. **Secrets outside the repo.** Tokens only in the environment/sandbox;
    in the repo, a template version without secrets. Deliberately do
    NOT archive databases if they can be rebuilt from sources (seed +
@@ -90,8 +98,10 @@ to be exported beyond the chat — automatically and continuously, not
    repeat the start ritual just the same — the summary loses the
    "soft" arrangements. Task end: worklog entry + a save of the new
    conversation threads (a background push will not write the
-   conversation for the assistant) + background push. The Human has
-   a ready-made incantation in the start file.
+   conversation for the assistant) + background push; did a new
+   "product-class" file come into being? → add it to the save map
+   BEFORE the push. The Human has a ready-made incantation in the
+   start file.
 10. **Honesty about limits.** The assistant will not remind on its
     own — it cannot open a chat at a set time; reminders fire with the
     Human's first message. About limitations (limits, costs, tool
@@ -129,6 +139,13 @@ not ill will; the right response is "refresh yourself from the repo".
 In the source project this variant arrived uninvited and passed with
 a correction: the human caught the regressions, the repo restored
 the full context.
+
+The drill covers the snapshot itself: verify save completeness **from
+the repo side** (reading raw URLs / the API), not from the working
+directory — especially after rounds that produced many new files.
+In the source project, such an audit revealed that the save map had
+not grown for many tasks: files existed in the sandbox while the repo
+returned 404s (Case 7).
 
 ## Repository structure
 
@@ -205,3 +222,25 @@ of failure.
    session, and the Human is often the faster smoke detector — a
    sudden regression of manners means "refresh from the repo", not
    grounds for reproach.
+7. **A save map that stopped growing (a file existing ≠ a file
+   archived).** The snapshot was pushed by a script with an explicit
+   file list; during the project's fastest growth phase the list was
+   not extended, so new product files (analysis results, scripts,
+   screenshots) lived and died in the sandbox. Nothing alarmed anyone —
+   the files were visible on disk — until a repo-side audit (raw URLs)
+   returned 404 for a dozen recent files. The save "worked"; it just
+   saved something other than what existed. → rules 1, 7, 9: the save
+   map is part of the snapshot; add product files at the moment of
+   creation, and verify completeness from the repo side, never from
+   the working directory.
+8. **An emoji in a file name versus the API (a file name is an
+   interface).** Pushing a package through the GitHub Contents API
+   failed mid-run with UnicodeEncodeError — the path (containing an
+   emoji, human-readable and correct) was pasted raw into the URL and
+   the client refused to encode non-ASCII characters. The error was
+   loud (fail fast), nothing was lost; the fix was explicit
+   percent-encoding of the path (identical behavior for pure-ASCII
+   names). The same project had caught the mirror-image bug on the
+   read side earlier — one boundary, two directions, one lesson.
+   → rule 7: name files defensively at API boundaries, encode paths
+   explicitly, and test the transfer end-to-end from the repo side.
