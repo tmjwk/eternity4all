@@ -1,6 +1,6 @@
 # Protokół Ciągłości — jak pracować z AI, gdy czat może umrzeć
 
-> Wersja 1.4 (edycja uniwersalna) · 09.10.2026 · protokół wypracowany w
+> Wersja 1.5 (edycja uniwersalna) · 10.10.2026 · protokół wypracowany w
 > praktyce (projekt strony klubu KTS Gliwice; przetrwał 4 resety
 > środowiska, śmierć równoległego czatu w innym projekcie, kompresję
 > kontekstu w trakcie sesji i cichą dziurę w mapie zapisu). Plik jest
