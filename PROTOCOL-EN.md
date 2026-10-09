@@ -1,6 +1,6 @@
 # The Continuity Protocol — how to work with AI when the chat can die
 
-> Version 1.4 (universal edition) · 9 Oct 2026 · a protocol forged in
+> Version 1.5 (universal edition) · 10 Oct 2026 · a protocol forged in
 > practice (the KTS Gliwice club website project; it survived 4
 > environment resets, the death of a parallel chat in another
 > project, a mid-session context compression, and a silent hole in
