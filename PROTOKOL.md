@@ -1,9 +1,9 @@
 # Protokół Ciągłości — jak pracować z AI, gdy czat może umrzeć
 
-> Wersja 1.3 (edycja uniwersalna) · 07.10.2026 · protokół wypracowany w
+> Wersja 1.4 (edycja uniwersalna) · 09.10.2026 · protokół wypracowany w
 > praktyce (projekt strony klubu KTS Gliwice; przetrwał 4 resety
-> środowiska, śmierć równoległego czatu w innym projekcie i kompresję
-> kontekstu w trakcie sesji). Plik jest
+> środowiska, śmierć równoległego czatu w innym projekcie, kompresję
+> kontekstu w trakcie sesji i cichą dziurę w mapie zapisu). Plik jest
 > przeznaczony **dla każdej AI** (asystent, agent, nowa sesja, nowy
 > model), która podejmuje JAKĄKOLWIEK robotę prowadzoną z człowiekiem —
 > oraz dla samego Człowieka.
@@ -76,7 +76,13 @@ czat — automatycznie i na bieżąco, nie „na koniec".
    nie „przy pożegnaniu".
 7. **Migawka kodu z diffem.** W repo trzymaj pełną kopię roboczą
    projektu; wysyłaj tylko zmienione pliki (porównanie blob-SHA),
-   usuwaj te, które zniknęły. Repo ma być odtwarzalne 1:1.
+   usuwaj te, które zniknęły. Repo ma być odtwarzalne 1:1. **Mapa
+   zapisu jest częścią migawki:** jeśli push prowadzi skrypt z jawną
+   listą plików, nowy plik klasy „produkt" (wynik pracy, skrypt,
+   zrzut) dopisuj do listy w chwili tworzenia — plik, którego nie ma
+   na mapie, nie istnieje dla backupu, choć istnieje w katalogu
+   roboczym (Przypadek 7). Na styku z API nazywaj pliki defensywnie
+   (ASCII) albo koduj ścieżki jawnie (Przypadek 8).
 8. **Sekrety poza repo.** Tokeny tylko w środowisku/piaskownicy;
    w repo wersja szablonowa bez sekretów. Bazy danych celowo
    NIE archiwizuj, jeśli da się je odtworzyć z źródeł (seed + sync)
@@ -86,8 +92,9 @@ czat — automatycznie i na bieżąco, nie „na koniec".
    po skrócie rozmowy przez platformę rytuał startowy powtórz tak samo
    — streszczenie gubi ustalenia „miękkie". Koniec zadania: wpis do
    workloga + zapis nowych wątków rozmowy (push w tle nie napisze
-   rozmowy za asystenta) + push w tle. Człowiek ma w pliku startowym
-   gotową inkantację.
+   rozmowy za asystenta) + push w tle; powstał nowy plik klasy
+   „produkt"? → dopisz go do mapy zapisu PRZED pushem. Człowiek ma
+   w pliku startowym gotową inkantację.
 10. **Uczciwość granic.** Asystent nie przypomni sam z siebie — nie
     może otworzyć czatu o wyznaczonej porze; przypomnienia odpala
     pierwsza wiadomość Człowieka. O ograniczeniach (limity, koszty,
@@ -122,6 +129,13 @@ nagły regres formy lub „zapominanie" ustaleń to objaw kompresji,
 nie zła wola; właściwa reakcja to „odśwież się z repo". W projekcie
 źródłowym ten wariant przyszedł nieproszony i został zaliczony
 z poprawką: człowiek wyłapał regresy, repo przywróciło pełny kontekst.
+
+Drill obejmuje też samą migawkę: kompletność zapisu weryfikuj
+**od strony repo** (odczyt surowych URL-i / API), nie od strony
+katalogu roboczego — i rób to zwłaszcza po rundach, w których
+powstało dużo nowych plików. W projekcie źródłowym taki audyt
+wykrył, że mapa zapisu nie rosła od wielu zadań: pliki istniały
+w piaskownicy, a w repo zwracały 404 (Przypadek 7).
 
 ## Struktura tego repo
 
