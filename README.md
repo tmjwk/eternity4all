@@ -43,7 +43,7 @@ i automatycznie, nigdy „na koniec".
 | `PROTOKOL.md` · `PROTOCOL-EN.md` | the protocol itself (PL · EN) |
 | `szablon/` | starter kit, Polish — START · WORKLOG · push script |
 | `templates/` | starter kit, English — START · WORKLOG |
-| `notatki/PRZYPADKI.md` | 8 case studies: what broke, what saved it (PL) |
+| `notatki/PRZYPADKI.md` | 9 case studies: what broke, what saved it (PL) |
 | `LICENSE` | CC BY 4.0 — copy, modify, redistribute, credit the authors |
 
 The starter kit is three plain files. No framework, no accounts, no
