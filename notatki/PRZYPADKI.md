@@ -149,41 +149,35 @@ czy emoji są wpisane w treść projektu — koduj ścieżki jawnie
 i testuj przesyłkę end-to-end po stronie repo. Weryfikacja „na oko"
 w katalogu roboczym tego błędu nie widzi; weryfikacja w repo — tak.
 
-## Przypadek 9: map() karmi funkcję indeksem (bug, który patrzy z pierwszego wiersza)
+## Przypadek 9: czcionki z chmury w ścieżce kompilacji (reset ujawnia ukrytą zależność)
 
-**Kontekst:** statyczna strona klubowa z listą rozegranych meczów.
-Wiersz renderowała funkcja z opcjonalnym parametrem statusu:
-`wierszMeczu(mecz, oczekuje = false)` — gdy `oczekuje` prawdziwe,
-wiersz dostawał plakietkę „wynik w drodze". Listę renderowano
-zwięźle: `lista.map(wierszMeczu)`.
+**Kontekst:** warsztat projektowy (aplikacja Next.js w piaskownicy)
+ładował rodziny pism przez `next/font/google` — wygodne, „zero plików
+w repo", zależność od sieci niewidoczna na co dzień. Warsztat był
+krytycznym narzędziem właściciela: podglądał w nim aktualną wersję
+strony i podejmował decyzje wizualne.
 
-**Przebieg:** `Array.map` wywołuje callback z trójką argumentów
-(element, **indeks**, tablica) — indeks wpadał prosto w parametr
-„oczekuje". Indeks 0 jest fałszywy → pierwszy wiersz poprawny;
-każdy kolejny indeks jest prawdziwy → plakietka „wynik w drodze"
-na meczach z od dawna wpisanym wynikiem (w tym samym wierszu kolor
-wyniku liczony niezależnie krzyczał „wygrana" — dwie informacje
-sprzeczne ze sobą). Bug przeżywał na produkcji od wersji, która
-wprowadziła parametr, bo: (a) wiersz nr 1 — najświeższy i najczęściej
-oglądany — zawsze wyglądał dobrze; (b) zrzuty dowodowe i testy
-krążyły wokół innych sekcji strony; (c) żaden błąd nie był zgłaszany,
-wszystko po prostu „wisiało". Wyłapał je Człowiek gołym okiem:
-„9:1 wynik w drodze raczej nie pasuje". Łata: wrapper —
-`lista.map((m) => wierszMeczu(m))`.
+**Przebieg:** po resecie piaskownicy pliki projektu przetrwały,
+serwer deweloperski wstał — ale moduł czcionek przestał się
+resolve'ować (uszkodzony cache po restarcie). Obraz zjawiska
+podstępny: błąd leżał w layoucie strony, a padał **CAŁY serwer**
+— także trasy API i pliki statyczne, wszystko zwracało 500. Z zewnątrz
+wyglądało to jak „warsztat zniknął", choć brakowało dosłownie
+kilku plików fontów. Właściciel zgłaszał awarię dwukrotnie, nim
+diagnoza trafiła w korzeń.
 
-**Szkoda:** tydzień mylącej informacji kosmetycznej; zero utraty
-danych (wyniki w repo były poprawne cały czas — psuł się tylko
-render).
+**Naprawa i profilaktyka:** krytyczne asety (pliki woff2) zhostowane
+LOKALNIE + jawne `@font-face`; zależność sieciowa usunięta ze ścieżki
+kompilacji na stałe. Pliki fontów włączone do migawki repo —
+są trudnoderywowalne dokładnie wtedy, gdy są najbardziej potrzebne
+(awaria/reset = często brak sieci lub zepsuty cache). Generator
+pobierania czcionek pozostaje w projekcie jako odtwarzalny
+dla przyszłych rodzin pism.
 
-**Wniosek:** (1) funkcję z parametrem opcjonalnym podawaj do
-`map()` wyłącznie przez wrapper — `map(f)` zadowoli się typami,
-które „przypadkiem się zgadzają", a język bez statycznej kontroli
-typów nie da znaku ostrzegawczego. (2) Weryfikacja wzrokowa i
-zrzutami ma pokrycie dobrane pod klasę błędu: bugi zależne od
-pozycji w liście kryją się na indeksie > 0 — sprawdzaj DRUGI
-i OSTATNI element listy, nie tylko pierwszy, bo pierwszy kłamie
-najbardziej wiarygodnie. (3) Kontynuacja wniosku z Przypadku 6:
-Człowiek bywa szybszym czujnikiem dymu niż automat — zgłoszenie
-„to nie wygląda dobrze" to nie zgłoszenie błędu, tylko gotowy
-punkt zaczepienia do śledztwa; traktuj je jak dane klasy premium,
-nie jak opinię.
+**Wniosek → zasady 7, 9:** zależność sieciowa w ścieżce kompilacji
+to ukryty pojedynczy punkt awarii — działa miesiącami i wybucha
+dokładnie po resecie, gdy jej nikt nie podejrzewa. Test ciągłości
+(różne środowisko) wyłapuje ją dopiero, gdy się odpali; taniej jest
+przyjąć regułę: to, co potrzebne do POSTAWIENIA projektu, trzymaj
+w projekcie (i w migawce) — sieć niech służy tylko danym, które
+naprawdę żyją na zewnątrz.
