@@ -181,3 +181,36 @@ dokładnie po resecie, gdy jej nikt nie podejrzewa. Test ciągłości
 przyjąć regułę: to, co potrzebne do POSTAWIENIA projektu, trzymaj
 w projekcie (i w migawce) — sieć niech służy tylko danym, które
 naprawdę żyją na zewnątrz.
+
+## Przypadek 10: cichy rollback plików w trakcie sesji („edytowane” ≠ „zapisane”)
+
+**Kontekst:** projekt strony klubowej w piaskownicy platformy,
+z regułą „pliki w katalogu projektu przetrwają reset”. Trzy pliki
+źródłowe (komponenty panelu roboczego) edytowane narzędziami
+asystenta wcześniej w tej samej sesji.
+
+**Przebieg:** edycje zapadły — narzędzie potwierdziło zapis,
+dev-serwer skompilował nową wersję, przeglądarka pokazała nowy
+stan interfejsu. Kilka minut później kontrolne porównanie blob-SHA
+z repo wykazało, że te trzy pliki wróciły do wczorajszego stanu,
+z WCZORAJSZYM mtime — jakby dzisiejszej edycji nigdy nie było.
+Sąsiednie katalogi (style, dane, worklog, skrypty) przetrwały
+nietknięte. Mechanizm przywracania stanu platformy nadpisał fragment
+drzewa kopią „archiwalną” — cicho, bez błędu i bez logu. Gdyby nie
+rutyna „sprawdź stan przed raportem gotowe”, regres wyszedłby
+dopiero u właściciela.
+
+**Naprawa i profilaktyka:** edycje ponowione; bezpośrednio po nich
+push migawki do repo (diff po blob-SHA wykrywa taki rozjazd od razu).
+Reguły praktyczne: (a) po paczce edycji plików źródłowych weryfikuj
+treść NA DYSKU, nie w pamięci narzędzia ani w przeglądarce —
+dev-serwer trzyma skompilowaną wersję w cache i potrafi pokazywać
+„nowe” przy starym źródle; (b) pushuj do zdalnego archiwum ZANIM
+padnie raport „gotowe”; (c) przy podejrzeniu rollbacku porównuj
+mtime + blob-SHA z repo.
+
+**Wniosek → zasady 3, 6, 7:** „pliki przetrwają reset” nie znaczy
+„pliki pozostaną niezmienione w trakcie sesji”. Środowisko potrafi
+przywracać stan asynchronicznie, fragmentarycznie i bez śladu;
+jedyną prawdą o stanie projektu jest to, co siedzi w zdalnym repo.
+Pushuj wcześnie, weryfikuj późno — przed słowem „gotowe”.
