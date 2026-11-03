@@ -182,35 +182,35 @@ przyjąć regułę: to, co potrzebne do POSTAWIENIA projektu, trzymaj
 w projekcie (i w migawce) — sieć niech służy tylko danym, które
 naprawdę żyją na zewnątrz.
 
-## Przypadek 10: cichy rollback plików w trakcie sesji („edytowane” ≠ „zapisane”)
+## Przypadek 10: wdrożone ≠ zrobione (śmierć sesji w trakcie checklisty powdrożeniowej)
 
-**Kontekst:** projekt strony klubowej w piaskownicy platformy,
-z regułą „pliki w katalogu projektu przetrwają reset”. Trzy pliki
-źródłowe (komponenty panelu roboczego) edytowane narzędziami
-asystenta wcześniej w tej samej sesji.
+**Kontekst:** projekt ze standaryzowanym workflow wydawniczym: staging →
+testy → deploy na żywą → synchronizacja kopii roboczej (lustra) →
+dokumentacja → raport. Każdy krok checklisty zostawia inny, niezależnie
+weryfikowalny ślad: tag wydania i plik wersji w repo produkcyjnym,
+plik stanu deployu, wpis w dzienniku prac, sekcja w zapisie rozmowy.
 
-**Przebieg:** edycje zapadły — narzędzie potwierdziło zapis,
-dev-serwer skompilował nową wersję, przeglądarka pokazała nowy
-stan interfejsu. Kilka minut później kontrolne porównanie blob-SHA
-z repo wykazało, że te trzy pliki wróciły do wczorajszego stanu,
-z WCZORAJSZYM mtime — jakby dzisiejszej edycji nigdy nie było.
-Sąsiednie katalogi (style, dane, worklog, skrypty) przetrwały
-nietknięte. Mechanizm przywracania stanu platformy nadpisał fragment
-drzewa kopią „archiwalną” — cicho, bez błędu i bez logu. Gdyby nie
-rutyna „sprawdź stan przed raportem gotowe”, regres wyszedłby
-dopiero u właściciela.
+**Przebieg:** sesja padła po DEPLOYU nowej wersji, przed resztą
+checklisty. Kopię roboczą (warsztat-podgląd) zostawiła na starszej
+wersji, dokumentacji nie napisała, skryptu deployu i pliku stanu nie
+zachowała — nic tego nie alarmowało. Sesja kontynuacyjna (wznowiona
+ze streszczenia) wykryła obie dziury dopiero wtedy, gdy zdiffowała
+NIEZALEŻNE źródła prawdy: API repo produkcyjnego (tag i wersja istnieją
+→ deploy BYŁ), diff lustra z żywą (pliki się różnią → synchronizacji
+NIE BYŁO), ogon dziennika (ostatni wpis mówi „czekam na zielone
+światło", choć wersja już żyła → dokumentacji NIE BYŁO). Zaległości
+uzupełnione, lustro wyrównane diffem, a nie „na oko".
 
-**Naprawa i profilaktyka:** edycje ponowione; bezpośrednio po nich
-push migawki do repo (diff po blob-SHA wykrywa taki rozjazd od razu).
-Reguły praktyczne: (a) po paczce edycji plików źródłowych weryfikuj
-treść NA DYSKU, nie w pamięci narzędzia ani w przeglądarce —
-dev-serwer trzyma skompilowaną wersję w cache i potrafi pokazywać
-„nowe” przy starym źródle; (b) pushuj do zdalnego archiwum ZANIM
-padnie raport „gotowe”; (c) przy podejrzeniu rollbacku porównuj
-mtime + blob-SHA z repo.
+**Szkoda:** w produkcie zero strat — deploy przetrwał, bo jego prawda
+mieszkała w repo. Koszt: praca detektywistyczna następcy plus ryzyko,
+że cicho odstałe lustro ktoś przecierpi ręcznie zamiast zdiffować
+— wtedy rozjazd utrwala się i wraca jako „misterna niespójność".
 
-**Wniosek → zasady 3, 6, 7:** „pliki przetrwają reset” nie znaczy
-„pliki pozostaną niezmienione w trakcie sesji”. Środowisko potrafi
-przywracać stan asynchronicznie, fragmentarycznie i bez śladu;
-jedyną prawdą o stanie projektu jest to, co siedzi w zdalnym repo.
-Pushuj wcześnie, weryfikuj późno — przed słowem „gotowe”.
+**Wniosek → zasady 1, 7, 9:** „wdrożone" znaczy „wdrożone +
+zsynchrowane + udokumentowane". Dopóki któregoś śladu brak, zadanie
+jest niedokończone — i to musi być widoczne Z ZEWNĄTRZ, bez pamięci
+po padłej sesji: każdy krok checklisty zostawiaj OSOBNYM, trwałym
+śladem (osobny plik stanu, wpis, tag), a kopie i lustra weryfikuj
+diffem wobec źródła prawdy. Kuzyn Przypadku 7: tam „plik istnieje ≠
+plik zarchiwizowany", tu „deploy istnieje ≠ zadanie skończone" —
+w obu katalog roboczy udaje, że wszystko jest już załatwione.
