@@ -214,3 +214,35 @@ po padłej sesji: każdy krok checklisty zostawiaj OSOBNYM, trwałym
 diffem wobec źródła prawdy. Kuzyn Przypadku 7: tam „plik istnieje ≠
 plik zarchiwizowany", tu „deploy istnieje ≠ zadanie skończone" —
 w obu katalog roboczy udaje, że wszystko jest już załatwione.
+
+## Przypadek 11: etykiety źródła ≠ struktura źródła (numery kolejków vs zbiór par)
+
+**Kontekst:** funkcja „duchów rewanży” dorysowuje brakujące mecze sezonu
+jako lustrzane odbicia par już opublikowanych. Warunkiem jest double
+round-robin (każda para gra dwa razy). Jedna liga była wyłączona z
+zasięgu, bo „nie mamy wzorca II rundy” — a źródło (oficjalny portal
+federacji) publikuje terminarz z numerami kolejków, które wyglądają
+wiarygodnie.
+
+**Przebieg:** przed rozszerzeniem zasięgu zweryfikowano format dwutorowo:
+(1) historia — poprzedni sezon tej samej grupy (niezależny serwis):
+18 meczów na drużynę, rewanże z odwróconą rolą gospodarza; (2) stan
+bieżący — ekstrakcja CAŁEGO opublikowanego terminarza grupy i analiza
+ZBIORU PAR: 45 meczów, 45 unikalnych par, zero powtórzeń, każda drużyna
+dokładnie 9 = kompletna runda 1. Przy okazji wyszło, że etykiety
+„kolejka” u źródła są przesunięte: mecz domykający rundę 1 figurował
+jako „kolejka 10”. Gdyby wnioskować z etykiet („kolejka 10 istnieje →
+rewanże się zaczęły”), funkcja i komunikaty poszłyby w błąd; zbiór par
+jest odporny na numerację.
+
+**Szkoda:** potencjalnie — błędne założenie formatu propagujące się do
+interfejsu (mianowniki, teksty dymków „2. runda nieopublikowana” wobec
+widocznej „kolejki 10”). W realu zero strat, bo decyzję o zasięgu
+wzięto dopiero PO weryfikacji.
+
+**Wniosek → zasady 1, 6:** o strukturze danych źródła rozstrzyga
+analiza danych (zbiory, pary, liczności), nie etykiety, które źródło
+samo nadaje — etykiety są prezentacją i bywają przesunięte. Drugi tor
+weryfikacji (historia formatu u niezależnego serwisu) tania i zamyka
+temat. A przy projektowaniu komunikatów dla użytkownika mów o tym, co
+gwarantujesz („rewanż”, „druga gra pary”), nie o numeracji źródła.
