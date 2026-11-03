@@ -101,7 +101,11 @@ to be exported beyond the chat — automatically and continuously, not
    conversation for the assistant) + background push; did a new
    "product-class" file come into being? → add it to the save map
    BEFORE the push. The Human has a ready-made incantation in the
-   start file.
+   start file. Task end also covers the steps "after the main
+   product" (mirror sync, documentation): leave a separate trace for
+   every checklist step — a session dying mid-checklist then becomes
+   "which traces exist", not a guessing game (Case 10: deployed ≠
+   done).
 10. **Honesty about limits.** The assistant will not remind on its
     own — it cannot open a chat at a set time; reminders fire with the
     Human's first message. About limitations (limits, costs, tool
