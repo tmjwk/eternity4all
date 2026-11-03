@@ -94,7 +94,11 @@ czat — automatycznie i na bieżąco, nie „na koniec".
    workloga + zapis nowych wątków rozmowy (push w tle nie napisze
    rozmowy za asystenta) + push w tle; powstał nowy plik klasy
    „produkt"? → dopisz go do mapy zapisu PRZED pushem. Człowiek ma
-   w pliku startowym gotową inkantację.
+   w pliku startowym gotową inkantację. Koniec zadania obejmuje też
+   kroki „po głównym produkcie" (synchronizacja kopii, dokumentacja):
+   każdy krok checklisty zostawiaj osobnym śladem — śmierć sesji
+   w połowie checklisty jest wtedy pytaniem „które ślady istnieją",
+   a nie zgadką (Przypadek 10: wdrożone ≠ zrobione).
 10. **Uczciwość granic.** Asystent nie przypomni sam z siebie — nie
     może otworzyć czatu o wyznaczonej porze; przypomnienia odpala
     pierwsza wiadomość Człowieka. O ograniczeniach (limity, koszty,
