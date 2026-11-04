@@ -246,3 +246,38 @@ samo nadaje — etykiety są prezentacją i bywają przesunięte. Drugi tor
 weryfikacji (historia formatu u niezależnego serwisu) tania i zamyka
 temat. A przy projektowaniu komunikatów dla użytkownika mów o tym, co
 gwarantujesz („rewanż”, „druga gra pary”), nie o numeracji źródła.
+
+## Przypadek 12: kolor w oku użytkownika ≠ kolor w computed style (złudzenie kontrastu)
+
+**Kontekst:** zgłoszenie właściciela strony: „pasek był w jasno niebieskim,
+teraz dałeś go w granacie — chodziło mi o granat pomiędzy, ten ciemnoniebieski
+jak napis «Powiększ wpis»”. Trzy odcienie w oczach zgłaszającego: jasny
+(stary pasek), ciemny granat (nowy pasek) i „ciemnoniebieski” (wzorcowy
+napis). Prośba o dopasowanie paska do napisu.
+
+**Przebieg:** pomiar computed style (render headless + getComputedStyle,
+nie oko): wzorcowy napis = --primary #0057b8 — DOKŁADNIE ten kolor, który
+pasek miał przed zmianą. Fizycznie istniały dwa odcienie, nie trzy. Mały
+pogrubiony napis na białej karcie wygląda ciemnobłękitny; duże pole tego
+samego hex wygląda „jasnoniebieskie” (kontrast jednoczesny + skala).
+Rozwiązanie: uczciwie pokazać pomiar, wprowadzić TRZECI, jawny odcień
+palety (realna średnia dwóch skrajnych, z zachowanym odcieniem hue),
+zostawiając w komentarzu kodu ścieżkę do wariantu dosłownego (jedna
+linia). Weryfikacja: testy automatyczne liczbowo (tło paska w obu
+trybach), ocena wizualna modelem VLM na złożeniu porównawczym (trzy
+paski + napis) i na pełnym zrzucie strony.
+
+**Szkoda:** potencjalnie — guerrilla ping-pong wdrożeń: dosłowne
+wykonanie (pasek = kolor napisu) przywróciłoby stan odrzucony
+(„jasny”), a kolejne przyciemnienie bez pomiaru mogłoby trafić
+w kolejny zły koniec skali. W realu zero strat — pomiar w pierwszym
+kroku zamknął temat w jednym wdrożeniu.
+
+**Wniosek → zasady 1, 2:** przy zgłoszeniach „kolor/rozmiar jak
+w elemencie Y” NAJPIERW pomiar obu elementów (computed style,
+bounding box), potem decyzja — percepcja użytkownika jest wymaganiem
+produktowym, ale jej deskryptory („jasny”, „ciemny”) bywają złudzeniem
+kontrastu przy tym samym hex. Gdy pomiar rozmija się z opisem, pokaż
+obie liczby, zaproponuj wariant realnie pośredni i zapisz w kodzie
+ścieżkę do wariantu dosłownego — następca (i użytkownik) dostaje
+kontrolę bez drugiej rundy zgadywania.
