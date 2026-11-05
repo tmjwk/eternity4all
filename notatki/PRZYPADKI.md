@@ -281,3 +281,35 @@ kontrastu przy tym samym hex. Gdy pomiar rozmija się z opisem, pokaż
 obie liczby, zaproponuj wariant realnie pośredni i zapisz w kodzie
 ścieżkę do wariantu dosłownego — następca (i użytkownik) dostaje
 kontrolę bez drugiej rundy zgadywania.
+
+## Przypadek 13: przycisk zagubiony w komunikacie (działa ≠ wiadomo, że działa)
+
+**Kontekst:** w ślad za wdrożeniem przepisanego powiadomienia o nowej
+wersji strony właściciel: „zuper ale zgubiłeś w tym komunikacie przycisk
+ponownego załadowania strony. miałeś to już :)”. Komunikat dostarczeniowy
+opisywał mechanizm (kiedy komunikat wstaje, zasada „nigdy nie przeładowujemy
+karty sami”, omijanie cache przy kliknięciu) — i pominął wprost
+potwierdzenie, że przycisk „Odśwież stronę” ZOSTAŁ.
+
+**Przebieg:** zamiast „naprawiać” — audyt pełnej ścieżki: grep przycisku
+po wszystkich zachowanych wersjach kodu, pobór plików z żywej strony
+(cztery pliki: strona główna + trzy podstrony), render headless z DOM-em
+(geometria, kolor, pozycja przycisku) na desktopie, telefonie, wąskim
+ekranie i podstronach oraz w odtworzonym scenariuszu zgłaszającego
+(stary kod w cache przeglądarki + deploy w trakcie życia karty), na końcu
+analiza pikselowa zrzutów dowodowych (pomarańcz przycisku liczony
+w regionie toastu). Wynik: przycisk obecny i widoczny wszędzie, także
+na zrzutach sprzed zgłoszenia. Produkt nietknięty — „zgubił się” w opisie,
+nie w kodzie.
+
+**Szkoda:** realnie zero (jedna rundka wyjaśnień + dowód obrazkowy
+dla właściciela); potencjalnie — „naprawianie” działającej cechy (drugi
+przycisk obok istniejącego) albo erozja zaufania: każdy kolejny opis
+refactoru zaczynałby się od „na pewno nic nie zniknęło?”.
+
+**Wniosek → zasady 1, 2:** testy weryfikują produkt, komunikat
+dostarczeniowy weryfikuje percepcję — to dwa osobne dowody i oba trzeba
+zdać. Refactor cechy, którą właściciel zna i ceni, opisuj z jawnym
+„X zostało, dodatkowo Y”; a gdy przychodzi zgłoszenie „zgubiłeś X”,
+najpierw pełna ścieżka dowodowa (kod → DOM → piksele), potem odpowiedź
+— „już poprawiam” bez audytu zamienia iluzję w regresję.
