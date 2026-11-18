@@ -313,3 +313,53 @@ zdać. Refactor cechy, którą właściciel zna i ceni, opisuj z jawnym
 „X zostało, dodatkowo Y”; a gdy przychodzi zgłoszenie „zgubiłeś X”,
 najpierw pełna ścieżka dowodowa (kod → DOM → piksele), potem odpowiedź
 — „już poprawiam” bez audytu zamienia iluzję w regresję.
+
+## Przypadek 14: e-maile w publicznym arkuszu (wyciek, który przetrwał pięć iteracji)
+
+**Kontekst:** arkusz Google Sheets wspomagał stronę klubową (transmisje,
+mecze, zgłoszenia kibiców). Zgłoszenia szły przez Google Formularz,
+który automatycznie zapisuje adresy e-mail respondentów — i te adresy
+wylądowały w zakładce skoroszytu. Arkusz był udostępniony „każdy z
+linkiem” (tryb przeglądania), bo z niego czytały dane: strona statyczna
+oraz synchronizacja w CI.
+
+**Przebieg:** anonimowy odczyt testowy (bez logowania, jedno żądanie
+HTTP na kanał gviz/export) potwierdził, że zakładka z adresami e-mail
+jest publicznie czytelna — luka znana od kilku sesji, ale każda próba
+domknięcia kończyła się odkładaniem: najpierw plan „ukryj zakładki w
+arkuszu” (nie domyka — publikacja i gviz nie honorują ukrywania), potem
+„przenieś zgłoszenia do osobnego skoroszytu” (wymagało decyzji
+właściciela, która nie zapadła). Przełom nastąpił, gdy rozwiązanie
+przestało wymagać od właściciela czegokolwiek poza jedną decyzją
+i dwoma kliknięciami: (1) opublikować trzy bezpieczne zakładki jako
+stronę internetową (transmisje, mecze, ustawienia) — po uprzedniej
+anonimowej weryfikacji treści publikacji (zero adresów e-mail, zero
+kluczy API; klucz API zostaje w Script Properties, których publikacja
+nie obejmuje); (2) przepiąć WSZYSTKICH konsumentów na publikację i
+usunąć surowe ID arkusza z publicznego kodu — dopiero wtedy zamknięcie
+udostępniania niczego nie zrywa; (3) wyłączyć udostępnianie „każdy
+z linkiem”. Weryfikacja domknięcia przebiegła obustronnie: kanały,
+które miały umrzeć (gviz, export) — HTTP 401 dla każdej zakładki
+włącznie z osobowymi; kanały, które miały żyć (publikacja, sync
+w CI, strona) — HTTP 200 i zielony run. Dodatkowo: stara wersja
+pliku z surowym ID arkusza zostaje w historii gita repo — po
+zamknięciu udostępniania jest nieszkodliwa (ID bez dostępu to martwy
+ciąg znaków).
+
+**Szkoda:** potencjalnie duża (adresy e-mail respondentów formularza
+dostępne dla każdego z linkiem przez cały okres istnienia
+udostępniania); realnie — brak dowodów nadużycia; psychologicznie —
+kilka sesji z opóźnianym domknięciem wycieku, który dało się zamknąć
+dwoma kliknięciami.
+
+**Wniosek → zasady 1, 9:** prawda o bezpieczeństwie mieszka w teście
+anonimowego odczytu, nie w intencjach ustawień — „udostępnianie
+w trybie przeglądania” brzmi niewinnie, a odsłania dane osobowe każdemu.
+Domknięcie wycieku to dwa niezależne kroki: najpierw zdjęcie
+zależności (konsumentów przepinamy na kanał zastępczy, sekrety —
+w tym surowe ID — usuwamy z kodu), POTEM zamknięcie drzwi; odwrotna
+kolejność zrywa działające systemy i uczy właściciela, że „bezpieczne
+= awaria”. A test „czy zamknięte” zawsze łącz z testem „czy żyje” —
+kanał zastępczy ma własne zachowania (tu: przekierowanie 307 na CDN),
+które łatwo pomylić z awarią, jeśli test nie naśladuje prawdziwego
+klienta.
