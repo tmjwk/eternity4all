@@ -363,3 +363,44 @@ kolejność zrywa działające systemy i uczy właściciela, że „bezpieczne
 kanał zastępczy ma własne zachowania (tu: przekierowanie 307 na CDN),
 które łatwo pomylić z awarią, jeśli test nie naśladuje prawdziwego
 klienta.
+
+## Przypadek 15: znak diakrytyczny w nazwie pliku kontra API (setki pomyślnych zapisów ≠ zapis działa)
+
+**Kontekst:** migawka projektu (kilkaset plików) wysyłana do repo
+przez Contents API; skrypt zapisu działał od tygodni, przeszedł setki
+przebiegów. Wśród zrzutów dowodowych jeden miał polski znak
+w nazwie („DOWOD_live_1.16.0_piłka_ladowanie.png” — „ł”).
+
+**Przebieg:** nazwa pliku NIGDY nie weszła do jawnej mapy zapisu
+(rekonesans: grep po skrypcie zapisu — zero trafień), więc nikt nigdy
+nie próbował jej wysłać — a gdy po dodaniu wzorca (glob DOWOD_*.png)
+została wciągnięta po raz pierwszy, standardowa biblioteka HTTP
+wysypała się na kodowaniu: http.client buduje linię żądania ASCII
+i „ł” kończy pracę UnicodeEncodeError w putrequest. Wniosek niefalsy-
+fikowalny wprost, ale zgodny z dowodami: zapis „działał”, bo brak
+błędu braku. Przy okazji tego samego biegu wyszło, że ~30 innych
+zrzutów z katalogu download/ również nigdy nie było w mapie — pliki
+istniały lokalnie od tygodni („są na dysku!”), a w repo zwracałyby 404
+(dokładnie mechanizm Przypadku 7, tyle że w nowym katalogu). Naprawa
+dwuwarstwowa: (1) wzorce glob w generatorze mapy zamiast ręcznych
+wpisów dla klas plików o przewidywalnych nazwach (DOWOD_*.png,
+Raport_*.docx/.pdf) — mapa rośnie sama; (2) percent-encoding ścieżki
+w każdym wywołaniu API (quote z safe=”/?&=”), żeby znak spoza ASCII
+w nazwie był transportowany, a nie zabijał żądania. Weryfikacja po
+naprawie: plik z „ł” czytelny w drzewie repo przez API; drugi przebieg
+zapisu „nic do zrobienia” (idempotentność); ~30 zaległych plików
+wciągniętych jednym biegiem.
+
+**Szkoda:** zerowa bezpośrednia (piaskownica żyła), ale dziura w
+migawce istniała tygodnie — do momentu dodania globu nikt nie wiedział,
+że zrzut z „ł” (i 30 jego sąsiadów) w ogóle nie jest archiwizowany.
+
+**Wniosek → zasady 1, 7, 9:** „setki udanych przebiegów” nie jest
+dowodem, że zapis obejmuje wszystko — jest dowodem tylko na pliki,
+które kiedykolwiek wysłano. Każda klasa plików o nowych nazwach to
+osobne ryzyko cichej dziury; gdy mapę zastępujesz wzorcem, pierwszy
+bieg traktuj jako rekonesans (zobacz, CO się dopisało — może być tego
+dużo więcej niż planowałeś). A jeśli nazwy plików bywają narodowe,
+percent-encoding w warstwie transportu to warunek konieczny testu
+— błąd kodowania w http.client pojawia się dopiero przy PIERWSZYM
+pliku z diakrytykiem, czyli najpóźniej, jak się da.
